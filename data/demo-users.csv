@@ -1,0 +1,11 @@
+UserId,Email,FullName,Status,IsSystemAdmin,Roles,PersonaDescription
+user-admin,admin@demo.example.com,System Admin,Active,true,"anonymous,authenticated,admin",System administrator
+user-david,david.kramer@rapiddemo.com,David Kramer,Active,false,"anonymous,authenticated,bid-coordinator",Bid Coordinator — coordinates all active RFPs and qualification processes
+user-edward,edward.james@rapiddemo.com,Edward James,Active,false,"anonymous,authenticated,sales-manager",Sales Manager — approves Go/No-Go decisions and oversees pipeline
+user-sarah,sarah.mitchell@rapiddemo.com,Sarah Mitchell,Active,false,"anonymous,authenticated,account-manager",Account Manager — owns client relationships and initiates opportunities
+user-james,james.chen@rapiddemo.com,James Chen,Active,false,"anonymous,authenticated,account-manager",Account Manager — owns enterprise client accounts
+user-rachel,rachel.thompson@rapiddemo.com,Rachel Thompson,Active,false,"anonymous,authenticated,practice-lead",Practice Lead (Cloud & Infrastructure) — technical authority on cloud bids
+user-tom,tom.harrison@rapiddemo.com,Tom Harrison,Active,false,"anonymous,authenticated,delivery-lead",Delivery Lead — ensures delivery feasibility and resource planning
+user-lisa,lisa.wong@rapiddemo.com,Lisa Wong,Active,false,"anonymous,authenticated,practice-lead",Practice Lead (Modern Workplace) — expert in M365 and collaboration solutions
+user-marcus,marcus.johnson@rapiddemo.com,Marcus Johnson,Active,false,"anonymous,authenticated,expert",Senior Solutions Architect — technical presales and solution design
+user-nina,nina.patel@rapiddemo.com,Nina Patel,Active,false,"anonymous,authenticated,expert",Security Specialist — cybersecurity assessments and compliance

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Detail - AP Invoice Intake Agent</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:  { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#0057B8', 600:'#004a9e', 700:'#003d84', 800:'#00306a', 900:'#002350' },
+                        accent:   { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#F97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+                        neutral:  { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717' }
+                    },
+                    fontFamily: {
+                        heading: ['"DM Sans"', 'sans-serif'],
+                        body:    ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen">
+
+    <!-- Top Nav -->
+    <nav class="bg-white border-b border-neutral-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-6">
+                    <a href="/app/dashboard.html" class="flex items-center gap-2">
+                        <img src="/rapid_circle_logo.png" alt="Logo" class="h-8 w-auto">
+                    </a>
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                        <a href="/app/dashboard.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Dashboard</a>
+                        <a href="/app/invoices.html" class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700">Invoices</a>
+                        <a href="/app/vendors.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Vendors</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="userName" class="text-sm text-neutral-600"></span>
+                    <button id="btnLogout" class="text-sm text-neutral-500 hover:text-red-600 transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Back Button -->
+        <a href="/app/invoices.html" class="inline-flex items-center gap-1 text-sm text-primary-500 hover:text-primary-600 mb-6 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Back to Invoices
+        </a>
+
+        <!-- Invoice Header Card -->
+        <div id="invoiceHeader" class="bg-white rounded-xl border border-neutral-200 p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 id="headerVendor" class="text-xl font-bold text-neutral-900">Loading...</h1>
+                    <p id="headerInvoiceNum" class="text-sm text-neutral-500 mt-1"></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="headerStatus" class="inline-block px-3 py-1 rounded-full text-xs font-semibold"></span>
+                    <span id="headerAmount" class="text-2xl font-bold text-neutral-900"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-column layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Extracted Fields -->
+            <div class="bg-white rounded-xl border border-neutral-200">
+                <div class="px-5 py-4 border-b border-neutral-200">
+                    <h2 class="text-lg font-semibold text-neutral-900">Extracted Fields</h2>
+                </div>
+                <div id="extractedFields" class="p-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Results -->
+            <div class="bg-white rounded-xl border border-neutral-200">
+                <div class="px-5 py-4 border-b border-neutral-200">
+                    <h2 class="text-lg font-semibold text-neutral-900">Validation Results</h2>
+                </div>
+                <div id="validationResults" class="p-5">
+                    <p class="text-neutral-400 text-sm">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linked Documents -->
+        <div class="bg-white rounded-xl border border-neutral-200 mb-6">
+            <div class="px-5 py-4 border-b border-neutral-200">
+                <h2 class="text-lg font-semibold text-neutral-900">Linked Documents</h2>
+            </div>
+            <div id="linkedDocs" class="p-5">
+                <p class="text-neutral-400 text-sm">No linked documents found.</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3">
+            <button id="btnReExtract"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
+                Re-extract
+            </button>
+            <button id="btnMarkReady"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                Mark Ready
+            </button>
+            <button id="btnFlagException"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                Flag Exception
+            </button>
+            <button id="btnEdit"
+                    class="px-4 py-2 text-sm font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-colors">
+                Edit
+            </button>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="/js/authService.js"></script>
+    <script src="/app/app.js"></script>
+    <script src="/app/js/invoice-detail.js"></script>
+</body>
+</html>

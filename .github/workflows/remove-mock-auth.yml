@@ -1,0 +1,49 @@
+# =============================================================================
+# Remove Mock Authentication - One-Time Workflow
+# =============================================================================
+# This workflow permanently removes mock authentication from the application,
+# switching to Azure Static Web Apps (SWA) authentication.
+#
+# Run this workflow manually from the Actions tab when you're ready to
+# transition from mock auth to production Azure AD authentication.
+#
+# WARNING: This action is irreversible without using git to restore files.
+# =============================================================================
+
+name: Remove Mock Authentication
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  remove-mock-auth:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run remove-mock-auth script
+        run: |
+          chmod +x tools/remove-mock-auth.sh
+          yes | ./tools/remove-mock-auth.sh
+
+      - name: Delete this workflow file
+        run: rm -f .github/workflows/remove-mock-auth.yml
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: remove mock authentication
+
+          Permanently removed mock authentication in favor of Azure Static Web Apps authentication.
+          
+          This commit was automatically created by the 'Remove Mock Authentication' workflow."
+          git push

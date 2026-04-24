@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AP Invoice Intake Agent</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:  { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#0057B8', 600:'#004a9e', 700:'#003d84', 800:'#00306a', 900:'#002350' },
+                        accent:   { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#F97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+                        neutral:  { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717' }
+                    },
+                    fontFamily: {
+                        heading: ['"DM Sans"', 'sans-serif'],
+                        body:    ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen">
+
+    <!-- Top Nav -->
+    <nav class="bg-white border-b border-neutral-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-6">
+                    <a href="/app/dashboard.html" class="flex items-center gap-2">
+                        <img src="/rapid_circle_logo.png" alt="Logo" class="h-8 w-auto">
+                    </a>
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                        <a href="/app/dashboard.html" class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700">Dashboard</a>
+                        <a href="/app/invoices.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Invoices</a>
+                        <a href="/app/vendors.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Vendors</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="userName" class="text-sm text-neutral-600"></span>
+                    <button id="btnLogout" class="text-sm text-neutral-500 hover:text-red-600 transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <h1 class="text-2xl font-bold text-neutral-900 mb-6">Invoice Dashboard</h1>
+
+        <!-- Summary Cards -->
+        <div id="statsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Received -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-neutral-500">Received</span>
+                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </span>
+                </div>
+                <p id="statReceived" class="text-3xl font-bold text-neutral-900">--</p>
+            </div>
+            <!-- Ready for Zoho -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-neutral-500">Ready for Zoho</span>
+                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-50 text-green-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                </div>
+                <p id="statReady" class="text-3xl font-bold text-neutral-900">--</p>
+            </div>
+            <!-- Exception -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-neutral-500">Exception</span>
+                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                </div>
+                <p id="statException" class="text-3xl font-bold text-neutral-900">--</p>
+            </div>
+            <!-- In Review -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-neutral-500">In Review</span>
+                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </span>
+                </div>
+                <p id="statInReview" class="text-3xl font-bold text-neutral-900">--</p>
+            </div>
+        </div>
+
+        <!-- Recent Invoices -->
+        <div class="bg-white rounded-xl border border-neutral-200">
+            <div class="px-5 py-4 border-b border-neutral-200">
+                <h2 class="text-lg font-semibold text-neutral-900">Recent Invoices</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-neutral-100 text-left">
+                            <th class="px-5 py-3 font-medium text-neutral-500">Vendor</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Invoice #</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Date</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Amount</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Status</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentInvoicesBody">
+                        <tr><td colspan="6" class="px-5 py-8 text-center text-neutral-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="/js/authService.js"></script>
+    <script src="/app/app.js"></script>
+    <script src="/app/js/dashboard.js"></script>
+</body>
+</html>

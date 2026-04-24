@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices - AP Invoice Intake Agent</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:  { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#0057B8', 600:'#004a9e', 700:'#003d84', 800:'#00306a', 900:'#002350' },
+                        accent:   { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#F97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+                        neutral:  { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717' }
+                    },
+                    fontFamily: {
+                        heading: ['"DM Sans"', 'sans-serif'],
+                        body:    ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen">
+
+    <!-- Top Nav -->
+    <nav class="bg-white border-b border-neutral-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-6">
+                    <a href="/app/dashboard.html" class="flex items-center gap-2">
+                        <img src="/rapid_circle_logo.png" alt="Logo" class="h-8 w-auto">
+                    </a>
+                    <div class="flex items-center gap-1 text-sm font-medium">
+                        <a href="/app/dashboard.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Dashboard</a>
+                        <a href="/app/invoices.html" class="px-3 py-1.5 rounded-md bg-primary-50 text-primary-700">Invoices</a>
+                        <a href="/app/vendors.html" class="px-3 py-1.5 rounded-md text-neutral-600 hover:bg-neutral-100 transition-colors">Vendors</a>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="userName" class="text-sm text-neutral-600"></span>
+                    <button id="btnLogout" class="text-sm text-neutral-500 hover:text-red-600 transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-neutral-900">All Invoices</h1>
+            <button id="btnUploadOpen"
+                    class="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+                Upload Invoice
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="mb-4">
+            <input id="searchInput" type="text" placeholder="Search by vendor, invoice number, or status..."
+                   class="w-full max-w-md border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+        </div>
+
+        <!-- Invoice Table -->
+        <div class="bg-white rounded-xl border border-neutral-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-neutral-100 text-left">
+                            <th class="px-5 py-3 font-medium text-neutral-500">Vendor</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Invoice #</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Date</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Amount</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Currency</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Status</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesBody">
+                        <tr><td colspan="7" class="px-5 py-8 text-center text-neutral-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Invoice Modal -->
+    <div id="uploadModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" id="uploadBackdrop"></div>
+        <div class="relative flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-lg p-6 relative">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-4">Upload Invoice</h2>
+
+                <div class="space-y-4">
+                    <!-- Vendor Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Vendor</label>
+                        <select id="uploadVendor"
+                                class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                            <option value="">-- Select vendor --</option>
+                        </select>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice File (PDF, PNG, JPG)</label>
+                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
+                            <input id="uploadFile" type="file" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                            <label for="uploadFile" class="cursor-pointer">
+                                <svg class="w-8 h-8 mx-auto text-neutral-400 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                <p id="uploadFileName" class="text-sm text-neutral-500">Click to select or drag a file</p>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button id="btnUploadCancel"
+                            class="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button id="btnUploadSubmit"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="/js/authService.js"></script>
+    <script src="/app/app.js"></script>
+    <script src="/app/js/invoices.js"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+# Copilot Coding Agent Setup Steps
+# This workflow configures the development environment for GitHub Copilot coding agent.
+# It mirrors the dev container setup to ensure the agent has access to all necessary tools.
+#
+# For more information, see:
+# https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/customize-the-agent-environment
+
+name: "Copilot Setup Steps"
+
+# This workflow is automatically invoked by the Copilot coding agent before it starts working.
+# The workflow_dispatch trigger allows manual testing via the Actions tab if needed.
+on:
+  workflow_dispatch:
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      contents: read
+
+    # Environment variables matching the dev container and local development setup
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: true
+      # Azurite connection string for local storage emulation
+      STORAGE: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ============================================
+      # .NET 8.0 SDK Setup (with NuGet caching)
+      # ============================================
+      - name: Setup .NET 8.0 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+          cache: true
+          cache-dependency-path: "**/api.csproj"
+
+      # ============================================
+      # Node.js 22 Setup (matching dev container)
+      # ============================================
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # ============================================
+      # Cache global npm tools (Functions, SWA CLI, Azurite)
+      # Key changes when pinned versions are bumped.
+      # ============================================
+      - name: Get npm global prefix
+        id: npm-prefix
+        run: echo "dir=$(npm prefix -g)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache global npm tools
+        id: npm-tools-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.npm-prefix.outputs.dir }}/lib/node_modules
+            ${{ steps.npm-prefix.outputs.dir }}/bin
+          key: npm-tools-${{ runner.os }}-func4.6.0-swa2.0.8-azurite3.35.0
+
+      # ============================================
+      # Install npm tools (only on cache miss)
+      # Versions are pinned for deterministic builds.
+      # ============================================
+      - name: Install npm tools
+        if: steps.npm-tools-cache.outputs.cache-hit != 'true'
+        run: npm install -g azure-functions-core-tools@4.6.0 @azure/static-web-apps-cli@2.0.8 azurite@3.35.0 --unsafe-perm true
+
+      # ============================================
+      # Restore and Build .NET API
+      # ============================================
+      - name: Restore .NET dependencies
+        run: dotnet restore
+        working-directory: ./api
+
+      - name: Build .NET API
+        run: dotnet build --no-restore
+        working-directory: ./api
+
+      # ============================================
+      # Create local.settings.json for Azure Functions
+      # ============================================
+      - name: Create local.settings.json
+        run: |
+          cat > ./api/local.settings.json << 'EOF'
+          {
+            "IsEncrypted": false,
+            "Values": {
+              "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+              "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+              "STORAGE": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+            }
+          }
+          EOF
+
+      # ============================================
+      # Setup local environment
+      # Merge agent instructions idempotently — the
+      # sentinel comment prevents duplicate appends.
+      # ============================================
+      - name: Setup local environment
+        run: |
+          mkdir -p .azurite
+          if ! grep -q '<!-- AGENT-INSTRUCTIONS-MERGED -->' .github/copilot-instructions.md 2>/dev/null; then
+            echo "" >> .github/copilot-instructions.md
+            echo '<!-- AGENT-INSTRUCTIONS-MERGED -->' >> .github/copilot-instructions.md
+            cat .github/copilot-agent-instructions.md >> .github/copilot-instructions.md
+          fi
+
+      # ============================================
+      # Verify installations
+      # ============================================
+      - name: Verify tool installations
+        run: |
+          echo "=== Tool Versions ==="
+          echo "Node.js: $(node --version)"
+          echo "npm: $(npm --version)"
+          echo ".NET SDK: $(dotnet --version)"
+          echo "Azure Functions Core Tools: $(func --version)"
+          echo "SWA CLI: $(swa --version)"
+          echo "=== Verification Complete ==="

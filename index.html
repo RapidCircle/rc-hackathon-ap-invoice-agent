@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Invoice Intake Agent</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:  { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#0057B8', 600:'#004a9e', 700:'#003d84', 800:'#00306a', 900:'#002350' },
+                        accent:   { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#F97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+                        neutral:  { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717' }
+                    },
+                    fontFamily: {
+                        heading: ['"DM Sans"', 'sans-serif'],
+                        body:    ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen flex items-center justify-center">
+
+    <!-- Landing Card -->
+    <div class="w-full max-w-md mx-auto px-4">
+        <div class="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8 text-center">
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+                <img src="/rapid_circle_logo.png" alt="RapidCircle Logo" class="h-14 w-auto">
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-2xl font-bold text-neutral-900 mb-2">AP Invoice Intake Agent</h1>
+            <p class="text-neutral-500 text-sm mb-8">
+                Automated accounts-payable invoice processing powered by AI. Upload invoices, extract data, validate fields, and push to Zoho Books.
+            </p>
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                <a href="/login.html"
+                   class="block w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-center">
+                    Sign In
+                </a>
+                <button id="btnSeed"
+                        class="w-full bg-accent-500 hover:bg-accent-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                    Seed Test Data
+                </button>
+            </div>
+
+            <p class="text-xs text-neutral-400 mt-6">RapidCircle Hackathon 2026</p>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="/js/authService.js"></script>
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                success: 'bg-green-50 text-green-800 border-green-200',
+                error:   'bg-red-50 text-red-800 border-red-200',
+                info:    'bg-blue-50 text-blue-800 border-blue-200'
+            };
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-lg border shadow-sm text-sm font-medium ${colors[type] || colors.info} transition-opacity duration-300`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        document.getElementById('btnSeed').addEventListener('click', async () => {
+            const btn = document.getElementById('btnSeed');
+            btn.disabled = true;
+            btn.textContent = 'Seeding...';
+            const result = await authService.seedDemoData();
+            if (result.success) {
+                showToast('Demo data seeded successfully!', 'success');
+            } else {
+                showToast(result.error || 'Failed to seed data', 'error');
+            }
+            btn.disabled = false;
+            btn.textContent = 'Seed Test Data';
+        });
+    </script>
+</body>
+</html>

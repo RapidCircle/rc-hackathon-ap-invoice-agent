@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - AP Invoice Intake Agent</title>
+    <link rel="stylesheet" href="/vendor/fonts.css">
+    <script src="/vendor/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:  { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#0057B8', 600:'#004a9e', 700:'#003d84', 800:'#00306a', 900:'#002350' },
+                        accent:   { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#F97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+                        neutral:  { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717' }
+                    },
+                    fontFamily: {
+                        heading: ['"DM Sans"', 'sans-serif'],
+                        body:    ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-md mx-auto px-4">
+        <div class="bg-white rounded-2xl shadow-lg border border-neutral-200 p-8">
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+                <img src="/rapid_circle_logo.png" alt="RapidCircle Logo" class="h-12 w-auto">
+            </div>
+            <h1 class="text-xl font-bold text-neutral-900 text-center mb-1">Sign In</h1>
+            <p class="text-neutral-500 text-sm text-center mb-6">AP Invoice Intake Agent</p>
+
+            <!-- Step 1: Persona + Email -->
+            <div id="stepEmail">
+                <!-- Persona selector (mock auth) -->
+                <div id="personaSection" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Select Persona</label>
+                    <select id="personaSelect"
+                            class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        <option value="">-- Choose a demo persona --</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="emailInput" class="block text-sm font-medium text-neutral-700 mb-1">Email Address</label>
+                    <input id="emailInput" type="email" placeholder="you@company.com"
+                           class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                </div>
+
+                <button id="btnLogin"
+                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                    Continue
+                </button>
+            </div>
+
+            <!-- Step 2: MFA -->
+            <div id="stepMfa" class="hidden">
+                <p class="text-sm text-neutral-600 mb-4">Enter the 6-digit verification code. <span class="text-neutral-400">(Hint: 123456)</span></p>
+                <div class="mb-4">
+                    <label for="mfaInput" class="block text-sm font-medium text-neutral-700 mb-1">Verification Code</label>
+                    <input id="mfaInput" type="text" maxlength="6" placeholder="123456"
+                           class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm tracking-widest text-center focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                </div>
+                <button id="btnVerify"
+                        class="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors">
+                    Verify
+                </button>
+            </div>
+
+            <!-- Error display -->
+            <div id="loginError" class="hidden mt-4 bg-red-50 text-red-700 text-sm px-4 py-3 rounded-lg border border-red-200"></div>
+
+            <div class="mt-6 text-center">
+                <a href="/" class="text-sm text-primary-500 hover:text-primary-600 transition-colors">&larr; Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/authService.js"></script>
+    <script>
+        const stepEmail    = document.getElementById('stepEmail');
+        const stepMfa      = document.getElementById('stepMfa');
+        const loginError   = document.getElementById('loginError');
+        const emailInput   = document.getElementById('emailInput');
+        const mfaInput     = document.getElementById('mfaInput');
+        const btnLogin     = document.getElementById('btnLogin');
+        const btnVerify    = document.getElementById('btnVerify');
+        const personaSec   = document.getElementById('personaSection');
+        const personaSel   = document.getElementById('personaSelect');
+
+        function showError(msg) {
+            loginError.textContent = msg;
+            loginError.classList.remove('hidden');
+        }
+        function hideError() {
+            loginError.classList.add('hidden');
+        }
+
+        // Initialize and load personas
+        (async () => {
+            await authService.initialize();
+
+            // If already authenticated, redirect
+            const state = await authService.getCurrentUser();
+            if (state.isAuthenticated) {
+                window.location.href = '/app/dashboard.html';
+                return;
+            }
+
+            if (authService.isMockAuth()) {
+                const personas = await authService.getPersonas();
+                if (personas.length > 0) {
+                    personaSec.classList.remove('hidden');
+                    personas.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.email;
+                        opt.textContent = `${p.fullName} - ${p.description}`;
+                        personaSel.appendChild(opt);
+                    });
+                    personaSel.addEventListener('change', () => {
+                        emailInput.value = personaSel.value;
+                    });
+                }
+            }
+        })();
+
+        // Step 1: Login
+        btnLogin.addEventListener('click', async () => {
+            hideError();
+            const email = emailInput.value.trim();
+            if (!email) { showError('Please enter an email address.'); return; }
+
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Signing in...';
+
+            const result = await authService.login(email);
+            if (!result.success) {
+                showError(result.error || 'Login failed');
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Continue';
+                return;
+            }
+
+            if (result.requiresMfa) {
+                stepEmail.classList.add('hidden');
+                stepMfa.classList.remove('hidden');
+                mfaInput.focus();
+            } else {
+                window.location.href = '/app/dashboard.html';
+            }
+        });
+
+        // Step 2: MFA
+        btnVerify.addEventListener('click', async () => {
+            hideError();
+            const code = mfaInput.value.trim();
+            if (!code) { showError('Please enter the verification code.'); return; }
+
+            btnVerify.disabled = true;
+            btnVerify.textContent = 'Verifying...';
+
+            const result = await authService.verifyMfa(code);
+            if (!result.success) {
+                showError(result.error || 'Verification failed');
+                btnVerify.disabled = false;
+                btnVerify.textContent = 'Verify';
+                return;
+            }
+
+            window.location.href = '/app/dashboard.html';
+        });
+
+        // Allow Enter key
+        emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnLogin.click(); });
+        mfaInput.addEventListener('keydown', e => { if (e.key === 'Enter') btnVerify.click(); });
+    </script>
+</body>
+</html>
