@@ -80,6 +80,19 @@ stop_swa() {
   log "  ⚠️  Ports may still be in use after 15s — will attempt start anyway"
 }
 
+ensure_cli_tools() {
+  local missing=false
+  command -v swa >/dev/null 2>&1 || missing=true
+  command -v azurite >/dev/null 2>&1 || missing=true
+  command -v func >/dev/null 2>&1 || missing=true
+
+  if $missing; then
+    log "Installing CLI tools (swa, azurite, func)..."
+    npm install -g @azure/static-web-apps-cli azurite azure-functions-core-tools@4 || fail "npm install failed"
+    log "  CLI tools installed"
+  fi
+}
+
 build_functions() {
   if $SKIP_BUILD; then
     log "Skipping build (--skip-build)"
@@ -189,6 +202,7 @@ case "$MODE" in
     log "Done"
     ;;
   start|restart)
+    ensure_cli_tools
     build_functions
     for attempt in $(seq 1 "$MAX_RETRIES"); do
       log "━━━ Attempt ${attempt}/${MAX_RETRIES} ━━━"
