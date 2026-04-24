@@ -19,7 +19,7 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
-  "postCreateCommand": "bash tools/init-local-settings.sh && npm install -g azure-functions-core-tools@4 @azure/static-web-apps-cli azurite && dotnet tool install --global dotnet-outdated-tool || true",
+  "postCreateCommand": "bash -c 'npm install -g azure-functions-core-tools@4 @azure/static-web-apps-cli azurite 2>&1 && bash tools/init-local-settings.sh && dotnet tool install --global dotnet-outdated-tool || true'",
   "postStartCommand": "bash .devcontainer/post-start.sh",
 
   "containerEnv": {
