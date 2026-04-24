@@ -59,7 +59,7 @@
             <h1 class="text-2xl font-bold text-neutral-900">All Invoices</h1>
             <button id="btnUploadOpen"
                     class="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
-                Upload Invoice
+                + Create Invoice
             </button>
         </div>
 
@@ -92,44 +92,110 @@
         </div>
     </main>
 
-    <!-- Upload Invoice Modal -->
-    <div id="uploadModal" class="fixed inset-0 z-50 hidden">
+    <!-- Create Invoice Modal -->
+    <div id="uploadModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
         <div class="absolute inset-0 bg-black/40" id="uploadBackdrop"></div>
-        <div class="relative flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-lg p-6 relative">
-                <h2 class="text-lg font-semibold text-neutral-900 mb-4">Upload Invoice</h2>
+        <div class="relative flex items-start justify-center min-h-screen p-4 pt-12">
+            <div class="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-2xl p-6 relative mb-12">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-1">Create Invoice</h2>
+                <p class="text-xs text-neutral-500 mb-5">Enter invoice details or upload a file for AI extraction</p>
 
-                <div class="space-y-4">
-                    <!-- Vendor Selection -->
-                    <div>
-                        <label class="block text-sm font-medium text-neutral-700 mb-1">Vendor</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Vendor -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Vendor Legal Name <span class="text-red-500">*</span></label>
                         <select id="uploadVendor"
                                 class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                            <option value="">-- Select vendor --</option>
+                            <option value="">-- Select vendor or type below --</option>
+                        </select>
+                        <input id="uploadVendorCustom" type="text" placeholder="Or type vendor name manually"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Invoice Number -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice Number <span class="text-red-500">*</span></label>
+                        <input id="fldInvoiceNumber" type="text" placeholder="e.g. INV-2026-001"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Invoice Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice Date <span class="text-red-500">*</span></label>
+                        <input id="fldInvoiceDate" type="date"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Currency -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Currency <span class="text-red-500">*</span></label>
+                        <select id="fldCurrency"
+                                class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                            <option value="INR" selected>INR - Indian Rupee</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="GBP">GBP - British Pound</option>
+                            <option value="AED">AED - UAE Dirham</option>
+                            <option value="SGD">SGD - Singapore Dollar</option>
                         </select>
                     </div>
 
-                    <!-- File Upload -->
+                    <!-- Total Amount -->
                     <div>
-                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice File (PDF, PNG, JPG)</label>
-                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Total Amount (incl. tax) <span class="text-red-500">*</span></label>
+                        <input id="fldTotalAmount" type="number" step="0.01" min="0" placeholder="e.g. 2450000"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Tax Amount -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Tax Amount</label>
+                        <input id="fldTaxAmount" type="number" step="0.01" min="0" placeholder="e.g. 441000"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- PO Number -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">PO Number</label>
+                        <input id="fldPoNumber" type="text" placeholder="e.g. PO-2026-101"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Email Sender -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Email Sender</label>
+                        <input id="fldEmailSender" type="email" placeholder="e.g. accounts@vendor.com"
+                               class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                    </div>
+
+                    <!-- Line Items Summary -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Line Items Description</label>
+                        <textarea id="fldLineItems" rows="2" placeholder="e.g. SAP Implementation Phase 2, Cloud Migration Services"
+                                  class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice Attachment (optional)</label>
+                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors cursor-pointer" id="uploadDropZone">
                             <input id="uploadFile" type="file" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
-                            <label for="uploadFile" class="cursor-pointer">
-                                <svg class="w-8 h-8 mx-auto text-neutral-400 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
-                                <p id="uploadFileName" class="text-sm text-neutral-500">Click to select or drag a file</p>
-                            </label>
+                            <div class="flex items-center justify-center gap-3">
+                                <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                <p id="uploadFileName" class="text-sm text-neutral-500">Click to select or drag a file (PDF, PNG, JPG)</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 mt-6">
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-neutral-100">
                     <button id="btnUploadCancel"
                             class="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <button id="btnUploadSubmit"
                             class="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
-                        Upload
+                        Create Invoice
                     </button>
                 </div>
             </div>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice INF-2026-03-7821</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .logo { font-size: 32px; font-weight: bold; color: #007CC3; }
+  .badge { background: #007CC3; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+  .divider { height: 2px; background: linear-gradient(90deg, #007CC3, #00B4D8); margin: 20px 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .card { background: #f8fbff; padding: 16px; border-radius: 8px; border: 1px solid #e8f0fe; }
+  .card h4 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; color: #007CC3; letter-spacing: 1px; }
+  .card p { margin: 2px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th { background: #007CC3; color: white; text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; }
+  td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+  td.right, th.right { text-align: right; }
+  .summary { background: #f8fbff; border: 1px solid #e8f0fe; border-radius: 8px; padding: 16px; float: right; width: 280px; }
+  .summary div { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .summary .total { font-size: 18px; font-weight: bold; color: #007CC3; border-top: 2px solid #007CC3; padding-top: 8px; margin-top: 8px; }
+  .footer { clear: both; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Infosys</div>
+    <div class="badge">TAX INVOICE</div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h4>Invoice Details</h4>
+      <p><strong>Invoice No:</strong> INF-2026-03-7821</p>
+      <p><strong>Date:</strong> 28 March 2026</p>
+      <p><strong>Due Date:</strong> 27 April 2026</p>
+      <p><strong>PO Reference:</strong> PO-2026-102</p>
+      <p><strong>GSTIN:</strong> 29AABCI1234L1Z5</p>
+    </div>
+    <div class="card">
+      <h4>Bill To</h4>
+      <p><strong>RapidCircle Technologies Pvt Ltd</strong></p>
+      <p>WeWork, Prestige Atlanta</p>
+      <p>Koramangala, Bangalore 560 034</p>
+      <p>Karnataka, India</p>
+      <p><strong>GSTIN:</strong> 29AABCR1234P1Z5</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>S.No</th>
+        <th>Service Description</th>
+        <th>SAC Code</th>
+        <th class="right">Amount (INR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Cloud Migration Services - Azure<br><small style="color:#999">Project: RCPL-CLOUD-2026 | Feb-Mar 2026</small></td>
+        <td>998314</td>
+        <td class="right">12,50,000.00</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>DevOps Setup & Training<br><small style="color:#999">CI/CD Pipeline + 3-day onsite training</small></td>
+        <td>998314</td>
+        <td class="right">6,25,000.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <div><span>Subtotal</span><span>&#8377; 15,88,983.05</span></div>
+    <div><span>IGST @ 18%</span><span>&#8377; 2,86,016.95</span></div>
+    <div class="total"><span>Total</span><span>&#8377; 18,75,000.00</span></div>
+  </div>
+
+  <div style="clear:both"></div>
+
+  <div style="margin-top:20px; padding:12px; background:#fff8e1; border-radius:6px; border:1px solid #ffe082; font-size:12px;">
+    <strong>Payment Instructions:</strong> NEFT/RTGS to Infosys Ltd, HDFC Bank, Electronic City Branch, Bangalore
+    | A/c: 50200012345678 | IFSC: HDFC0001234
+  </div>
+
+  <div class="footer">
+    <p>Infosys Limited | CIN: L85110KA1981PLC013115 | Registered Office: Electronics City, Hosur Road, Bangalore 560 100</p>
+    <p>This is a system-generated invoice and does not require a physical signature.</p>
+  </div>
+</body>
+</html>

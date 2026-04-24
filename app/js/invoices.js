@@ -115,24 +115,41 @@
         renderTable(filtered);
     });
 
-    // ---------- upload modal ----------
-    const uploadModal     = document.getElementById('uploadModal');
-    const uploadBackdrop  = document.getElementById('uploadBackdrop');
-    const btnUploadOpen   = document.getElementById('btnUploadOpen');
-    const btnUploadCancel = document.getElementById('btnUploadCancel');
-    const btnUploadSubmit = document.getElementById('btnUploadSubmit');
-    const uploadFile      = document.getElementById('uploadFile');
-    const uploadFileName  = document.getElementById('uploadFileName');
-    const uploadVendor    = document.getElementById('uploadVendor');
+    // ---------- create invoice modal ----------
+    var uploadModal     = document.getElementById('uploadModal');
+    var uploadBackdrop  = document.getElementById('uploadBackdrop');
+    var btnUploadOpen   = document.getElementById('btnUploadOpen');
+    var btnUploadCancel = document.getElementById('btnUploadCancel');
+    var btnUploadSubmit = document.getElementById('btnUploadSubmit');
+    var uploadFile      = document.getElementById('uploadFile');
+    var uploadFileName  = document.getElementById('uploadFileName');
+    var uploadVendor    = document.getElementById('uploadVendor');
+    var uploadDropZone  = document.getElementById('uploadDropZone');
 
     function openUploadModal()  { uploadModal.classList.remove('hidden'); }
-    function closeUploadModal() { uploadModal.classList.add('hidden'); uploadFile.value = ''; uploadFileName.textContent = 'Click to select or drag a file'; }
+    function closeUploadModal() {
+        uploadModal.classList.add('hidden');
+        uploadFile.value = '';
+        uploadFileName.textContent = 'Click to select or drag a file (PDF, PNG, JPG)';
+        // Reset form fields
+        var fields = ['fldInvoiceNumber', 'fldInvoiceDate', 'fldTotalAmount', 'fldTaxAmount', 'fldPoNumber', 'fldEmailSender', 'fldLineItems', 'uploadVendorCustom'];
+        for (var fi = 0; fi < fields.length; fi++) {
+            var el = document.getElementById(fields[fi]);
+            if (el) el.value = '';
+        }
+        document.getElementById('fldCurrency').value = 'INR';
+        uploadVendor.value = '';
+    }
 
     btnUploadOpen.addEventListener('click', openUploadModal);
     btnUploadCancel.addEventListener('click', closeUploadModal);
     uploadBackdrop.addEventListener('click', closeUploadModal);
 
-    uploadFile.addEventListener('change', () => {
+    // File input handling
+    if (uploadDropZone) {
+        uploadDropZone.addEventListener('click', function() { uploadFile.click(); });
+    }
+    uploadFile.addEventListener('change', function() {
         if (uploadFile.files.length > 0) {
             uploadFileName.textContent = uploadFile.files[0].name;
         }
@@ -140,55 +157,79 @@
 
     // Load vendors for the dropdown
     try {
-        const res = await authService.fetchWithAuth('/api/vendors');
-        if (res.ok) {
-            const data = await res.json();
-            const vendors = Array.isArray(data) ? data : (data.vendors || data.items || []);
-            vendors.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.id;
-                opt.textContent = v.legalName || v.name || v.vendorName || '--';
+        var vRes = await authService.fetchWithAuth('/api/vendors');
+        if (vRes.ok) {
+            var vData = await vRes.json();
+            var vendors = Array.isArray(vData) ? vData : (vData.vendors || vData.items || []);
+            for (var vi = 0; vi < vendors.length; vi++) {
+                var opt = document.createElement('option');
+                opt.value = vendors[vi].legalName || vendors[vi].name || '';
+                opt.textContent = vendors[vi].legalName || vendors[vi].name || vendors[vi].vendorName || '--';
                 uploadVendor.appendChild(opt);
-            });
+            }
         }
     } catch (err) {
         console.error('Failed to load vendors for dropdown:', err);
     }
 
-    // Submit upload
-    btnUploadSubmit.addEventListener('click', async () => {
-        const file = uploadFile.files[0];
-        if (!file) { showToast('Please select a file to upload.', 'error'); return; }
+    // Submit create invoice
+    btnUploadSubmit.addEventListener('click', async function() {
+        // Determine vendor name
+        var vendorName = uploadVendor.value || document.getElementById('uploadVendorCustom').value.trim();
+        var invoiceNumber = document.getElementById('fldInvoiceNumber').value.trim();
+        var invoiceDate = document.getElementById('fldInvoiceDate').value;
+        var currency = document.getElementById('fldCurrency').value;
+        var totalAmount = parseFloat(document.getElementById('fldTotalAmount').value);
+        var taxAmount = parseFloat(document.getElementById('fldTaxAmount').value) || 0;
+        var poNumber = document.getElementById('fldPoNumber').value.trim();
+        var emailSender = document.getElementById('fldEmailSender').value.trim();
+        var lineItems = document.getElementById('fldLineItems').value.trim();
+        var file = uploadFile.files[0];
 
-        const formData = new FormData();
-        formData.append('file', file);
-        if (uploadVendor.value) {
-            formData.append('vendorId', uploadVendor.value);
-        }
+        // Validation
+        if (!vendorName) { showToast('Vendor name is required.', 'error'); return; }
+        if (!invoiceNumber) { showToast('Invoice number is required.', 'error'); return; }
+        if (!invoiceDate) { showToast('Invoice date is required.', 'error'); return; }
+        if (isNaN(totalAmount) || totalAmount <= 0) { showToast('Total amount must be greater than zero.', 'error'); return; }
+
+        var payload = {
+            vendorLegalName: vendorName,
+            invoiceNumber: invoiceNumber,
+            invoiceDate: invoiceDate + 'T00:00:00Z',
+            currency: currency,
+            totalAmount: totalAmount,
+            taxAmount: taxAmount,
+            poNumber: poNumber,
+            emailSender: emailSender,
+            lineItemsSummary: lineItems ? '[{"description":"' + lineItems.replace(/"/g, '\\"') + '","amount":' + totalAmount + '}]' : '',
+            attachmentName: file ? file.name : ''
+        };
 
         btnUploadSubmit.disabled = true;
-        btnUploadSubmit.textContent = 'Uploading...';
+        btnUploadSubmit.textContent = 'Creating...';
 
         try {
-            const res = await authService.fetchWithAuth('/api/invoices', {
+            var res = await authService.fetchWithAuth('/api/invoices', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showToast('Invoice uploaded successfully!', 'success');
+                showToast('Invoice created successfully!', 'success');
                 closeUploadModal();
                 await loadInvoices();
             } else {
-                const err = await res.json().catch(() => ({}));
-                showToast(err.error || 'Upload failed.', 'error');
+                var errBody = null;
+                try { errBody = await res.json(); } catch (e) { errBody = {}; }
+                showToast(errBody.error || 'Failed to create invoice.', 'error');
             }
         } catch (err) {
-            console.error('Upload error:', err);
-            showToast('Network error during upload.', 'error');
+            console.error('Create invoice error:', err);
+            showToast('Network error creating invoice.', 'error');
         } finally {
             btnUploadSubmit.disabled = false;
-            btnUploadSubmit.textContent = 'Upload';
+            btnUploadSubmit.textContent = 'Create Invoice';
         }
     });
 

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice TCS/2026/INV-4501</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0057B8; padding-bottom: 20px; margin-bottom: 30px; }
+  .logo { font-size: 28px; font-weight: bold; color: #0057B8; }
+  .logo small { font-size: 12px; color: #666; display: block; font-weight: normal; }
+  .invoice-title { text-align: right; }
+  .invoice-title h1 { margin: 0; font-size: 32px; color: #0057B8; }
+  .invoice-title p { margin: 4px 0; color: #666; font-size: 14px; }
+  .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
+  .details div { width: 48%; }
+  .details h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; color: #999; letter-spacing: 1px; }
+  .details p { margin: 2px 0; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  th { background: #f5f5f5; text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #ddd; }
+  td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+  td.amount { text-align: right; }
+  th.amount { text-align: right; }
+  .totals { display: flex; justify-content: flex-end; }
+  .totals table { width: 300px; }
+  .totals td { border: none; padding: 6px 12px; }
+  .totals tr.total { font-weight: bold; font-size: 18px; border-top: 2px solid #0057B8; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999; text-align: center; }
+  .gstin { background: #f0f7ff; padding: 8px 12px; border-radius: 4px; font-size: 13px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TATA CONSULTANCY SERVICES<small>A Tata Enterprise</small></div>
+    <div class="invoice-title">
+      <h1>INVOICE</h1>
+      <p><strong>TCS/2026/INV-4501</strong></p>
+      <p>Date: 01 April 2026</p>
+    </div>
+  </div>
+
+  <div class="gstin">
+    <strong>GSTIN:</strong> 27AAACT2727Q1ZV &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>PAN:</strong> AAACT2727Q &nbsp;&nbsp;|&nbsp;&nbsp;
+    <strong>PO Ref:</strong> PO-2026-101
+  </div>
+
+  <div class="details">
+    <div>
+      <h3>From</h3>
+      <p><strong>Tata Consultancy Services Limited</strong></p>
+      <p>TCS House, Raveline Street</p>
+      <p>Fort, Mumbai 400 001</p>
+      <p>Maharashtra, India</p>
+      <p>Email: accounts@tcs.com</p>
+    </div>
+    <div>
+      <h3>Bill To</h3>
+      <p><strong>RapidCircle Technologies Pvt Ltd</strong></p>
+      <p>WeWork, Prestige Atlanta</p>
+      <p>Koramangala, Bangalore 560 034</p>
+      <p>Karnataka, India</p>
+      <p>GSTIN: 29AABCR1234P1Z5</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Description</th>
+        <th>HSN/SAC</th>
+        <th>Qty</th>
+        <th class="amount">Rate (INR)</th>
+        <th class="amount">Amount (INR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>SAP S/4HANA Implementation - Phase 2<br><small style="color:#999">Project code: RCPL-SAP-2026-02</small></td>
+        <td>998314</td>
+        <td>1</td>
+        <td class="amount">20,76,271.19</td>
+        <td class="amount">20,76,271.19</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr><td>Subtotal</td><td class="amount">&#8377; 20,76,271.19</td></tr>
+      <tr><td>CGST @ 9%</td><td class="amount">&#8377; 1,86,864.41</td></tr>
+      <tr><td>SGST @ 9%</td><td class="amount">&#8377; 1,86,864.41</td></tr>
+      <tr class="total"><td>Total</td><td class="amount">&#8377; 24,50,000.00</td></tr>
+    </table>
+  </div>
+
+  <div style="margin-top:30px; padding:15px; background:#fafafa; border-radius:6px; font-size:13px;">
+    <strong>Amount in words:</strong> Indian Rupees Twenty Four Lakhs Fifty Thousand Only<br>
+    <strong>Payment Terms:</strong> Net 30 days from invoice date<br>
+    <strong>Bank:</strong> State Bank of India, Fort Branch, Mumbai | A/c: 11234567890 | IFSC: SBIN0000001
+  </div>
+
+  <div class="footer">
+    <p>This is a computer-generated invoice. No signature required.</p>
+    <p>Tata Consultancy Services Limited | CIN: L22210MH1995PLC084781</p>
+  </div>
+</body>
+</html>

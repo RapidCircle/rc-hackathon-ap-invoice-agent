@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice HCL-2026-APR-0056</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 3px solid #0073CF; margin-bottom: 24px; }
+  .logo { font-size: 30px; font-weight: 800; color: #0073CF; letter-spacing: -1px; }
+  .stamp { border: 2px solid #0073CF; padding: 6px 14px; font-size: 14px; font-weight: bold; color: #0073CF; border-radius: 4px; }
+  .two-col { display: flex; gap: 24px; margin-bottom: 24px; }
+  .two-col > div { flex: 1; }
+  .field { margin-bottom: 8px; font-size: 13px; }
+  .field label { display: block; font-size: 10px; text-transform: uppercase; color: #999; letter-spacing: 0.5px; }
+  .field span { font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th { background: #0073CF; color: white; padding: 10px; text-align: left; font-size: 12px; }
+  td { padding: 10px; border-bottom: 1px solid #e8f4fd; font-size: 13px; }
+  .r { text-align: right; }
+  .summary { width: 280px; margin-left: auto; }
+  .summary .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+  .summary .total { font-weight: bold; font-size: 18px; color: #0073CF; border-top: 2px solid #0073CF; padding-top: 10px; }
+  .footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 40px; border-top: 1px solid #eee; padding-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">HCL Technologies</div>
+    <div class="stamp">TAX INVOICE</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="field"><label>Invoice Number</label><span>HCL-2026-APR-0056</span></div>
+      <div class="field"><label>Invoice Date</label><span>10 April 2026</span></div>
+      <div class="field"><label>PO Reference</label><span>PO-2026-105</span></div>
+      <div class="field"><label>GSTIN</label><span>09AABCH1234N1Z7</span></div>
+    </div>
+    <div>
+      <div class="field"><label>From</label><span>HCL Technologies Ltd</span></div>
+      <div class="field"><label>Address</label><span>HCL Campus, Sector 126, Noida 201304, UP</span></div>
+      <div class="field"><label>Bill To</label><span>RapidCircle Technologies Pvt Ltd, Bangalore</span></div>
+      <div class="field"><label>Customer GSTIN</label><span>29AABCR1234P1Z5</span></div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Service Description</th><th>SAC</th><th>Period</th><th class="r">Amount (INR)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>ERP Maintenance & Support - Annual Contract<br><small style="color:#888">SAP ECC 6.0 support, patches, basis admin, ABAP development</small></td>
+        <td>998314</td>
+        <td>Apr 2026 - Mar 2027</td>
+        <td class="r">40,25,423.73</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <div class="row"><span>Subtotal</span><span>&#8377; 40,25,423.73</span></div>
+    <div class="row"><span>IGST @ 18%</span><span>&#8377; 7,24,576.27</span></div>
+    <div class="row total"><span>Total</span><span>&#8377; 47,50,000.00</span></div>
+  </div>
+
+  <div style="margin-top:24px; font-size:12px; color:#555; background:#f5faff; padding:12px; border-radius:6px;">
+    <strong>Amount in Words:</strong> Rupees Forty Seven Lakhs Fifty Thousand Only<br>
+    <strong>Bank:</strong> HSBC, Noida | A/c: 098765432109 | IFSC: HSBC0110001<br>
+    <strong>Payment Terms:</strong> Net 30 | <strong>Late Fee:</strong> 1.5% per month after due date
+  </div>
+
+  <div class="footer">HCL Technologies Limited | CIN: L74140DL1991PLC046369 | www.hcltech.com</div>
+</body>
+</html>
