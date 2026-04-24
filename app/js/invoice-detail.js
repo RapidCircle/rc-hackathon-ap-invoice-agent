@@ -8,50 +8,60 @@
     // ---------- helpers ----------
     function escapeHtml(str) {
         if (str == null) return '';
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(String(str)));
-        return div.innerHTML;
+        var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 
-    function statusPill(status) {
-        const map = {
+    function formatCurrency(amount, currency) {
+        if (amount == null || isNaN(amount)) return '--';
+        var cur = currency || 'INR';
+        try {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: cur }).format(amount);
+        } catch (e) {
+            return cur + ' ' + Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    function statusPillClass(status) {
+        var map = {
             Received:     'bg-blue-50 text-blue-700',
             ReadyForZoho: 'bg-green-50 text-green-700',
             Exception:    'bg-red-50 text-red-700',
             InReview:     'bg-amber-50 text-amber-700',
             Corrected:    'bg-purple-50 text-purple-700'
         };
-        const cls = map[status] || 'bg-neutral-100 text-neutral-600';
-        return cls;
+        return map[status] || 'bg-neutral-100 text-neutral-600';
     }
 
-    function formatCurrency(amount, currency) {
-        if (amount == null) return '--';
-        try {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
-        } catch {
-            return `${currency || ''} ${Number(amount).toFixed(2)}`;
-        }
-    }
-
-    function showToast(message, type = 'info') {
-        const container = document.getElementById('toastContainer');
+    function showToast(message, type) {
+        type = type || 'info';
+        var container = document.getElementById('toastContainer');
         if (!container) return;
-        const colors = {
+        var colors = {
             success: 'bg-green-50 text-green-800 border-green-200',
             error:   'bg-red-50 text-red-800 border-red-200',
             info:    'bg-blue-50 text-blue-800 border-blue-200'
         };
-        const toast = document.createElement('div');
-        toast.className = `px-4 py-3 rounded-lg border shadow-sm text-sm font-medium ${colors[type] || colors.info} transition-opacity duration-300`;
+        var toast = document.createElement('div');
+        toast.className = 'px-4 py-3 rounded-lg border shadow-sm text-sm font-medium ' + (colors[type] || colors.info);
         toast.textContent = message;
         container.appendChild(toast);
-        setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 300); }, 4000);
     }
 
     // ---------- get invoice ID from URL ----------
-    const params = new URLSearchParams(window.location.search);
-    const invoiceId = params.get('id');
+    var params = new URLSearchParams(window.location.search);
+    var invoiceId = params.get('id');
 
     if (!invoiceId) {
         document.getElementById('headerVendor').textContent = 'No invoice ID provided';
@@ -59,10 +69,10 @@
     }
 
     // ---------- load invoice ----------
-    let invoice = null;
+    var invoice = null;
 
     try {
-        const res = await authService.fetchWithAuth(`/api/invoices/${encodeURIComponent(invoiceId)}`);
+        var res = await authService.fetchWithAuth('/api/invoices/' + encodeURIComponent(invoiceId));
         if (!res.ok) {
             document.getElementById('headerVendor').textContent = 'Invoice not found';
             return;
@@ -75,136 +85,196 @@
     }
 
     // ---------- render header ----------
-    document.getElementById('headerVendor').textContent = invoice.vendorName || invoice.vendor || 'Unknown Vendor';
-    document.getElementById('headerInvoiceNum').textContent = `Invoice #${escapeHtml(invoice.invoiceNumber || invoice.invoiceNo || '--')}`;
+    // Backend returns InvoiceEntity with: vendorLegalName, invoiceNumber, invoiceCurrency, totalAmount, status, etc.
+    document.getElementById('headerVendor').textContent = invoice.vendorLegalName || 'Unknown Vendor';
+    document.getElementById('headerInvoiceNum').textContent = 'Invoice #' + escapeHtml(invoice.invoiceNumber || '--');
 
-    const statusEl = document.getElementById('headerStatus');
-    statusEl.className = `inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusPill(invoice.status)}`;
+    var statusEl = document.getElementById('headerStatus');
+    statusEl.className = 'inline-block px-3 py-1 rounded-full text-xs font-semibold ' + statusPillClass(invoice.status);
     statusEl.textContent = invoice.status || 'Unknown';
 
-    document.getElementById('headerAmount').textContent = formatCurrency(invoice.totalAmount || invoice.amount, invoice.currency);
+    document.getElementById('headerAmount').textContent = formatCurrency(invoice.totalAmount, invoice.invoiceCurrency);
 
-    // ---------- render extracted fields ----------
-    const mandatoryFields = [
-        { key: 'vendorLegalName', label: 'Vendor Legal Name',     value: invoice.vendorName || invoice.vendor },
-        { key: 'invoiceNumber',   label: 'Invoice Number',        value: invoice.invoiceNumber || invoice.invoiceNo },
-        { key: 'invoiceDate',     label: 'Invoice Date',          value: invoice.invoiceDate },
-        { key: 'invoiceCurrency', label: 'Invoice Currency',      value: invoice.currency },
-        { key: 'totalAmount',     label: 'Total Amount (incl. tax)', value: formatCurrency(invoice.totalAmount || invoice.amount, invoice.currency) },
-        { key: 'taxAmount',       label: 'Tax Amount',            value: invoice.taxAmount != null ? formatCurrency(invoice.taxAmount, invoice.currency) : '--' },
-        { key: 'poNumber',        label: 'PO Number',             value: invoice.poNumber || invoice.purchaseOrder },
-        { key: 'lineItems',       label: 'Line Items',            value: invoice.lineItems ? `${Array.isArray(invoice.lineItems) ? invoice.lineItems.length : 0} item(s)` : '--' }
+    // ---------- render extracted fields (8 mandatory) ----------
+    var mandatoryFields = [
+        { label: 'Vendor Legal Name',       value: invoice.vendorLegalName },
+        { label: 'Invoice Number',           value: invoice.invoiceNumber },
+        { label: 'Invoice Date',             value: formatDate(invoice.invoiceDate) },
+        { label: 'Invoice Currency',         value: invoice.invoiceCurrency },
+        { label: 'Total Amount (incl. tax)', value: formatCurrency(invoice.totalAmount, invoice.invoiceCurrency) },
+        { label: 'Tax Amount',               value: formatCurrency(invoice.taxAmount, invoice.invoiceCurrency) },
+        { label: 'PO Number',                value: invoice.poNumber },
+        { label: 'Line Items',               value: invoice.lineItemsSummary || '--' }
     ];
 
-    const fieldsContainer = document.getElementById('extractedFields');
-    fieldsContainer.innerHTML = `
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            ${mandatoryFields.map(f => `
-                <div class="border border-neutral-100 rounded-lg p-3">
-                    <p class="text-xs font-medium text-neutral-500 mb-1">${escapeHtml(f.label)}</p>
-                    <p class="text-sm font-medium text-neutral-900">${escapeHtml(f.value ?? '--')}</p>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    var fieldsContainer = document.getElementById('extractedFields');
+    var fieldsHtml = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">';
+    for (var i = 0; i < mandatoryFields.length; i++) {
+        var f = mandatoryFields[i];
+        var hasValue = f.value && f.value !== '--' && f.value !== '';
+        var borderColor = hasValue ? 'border-neutral-100' : 'border-red-200 bg-red-50/30';
+        fieldsHtml += '<div class="border ' + borderColor + ' rounded-lg p-3">'
+            + '<p class="text-xs font-medium text-neutral-500 mb-1">' + escapeHtml(f.label) + '</p>'
+            + '<p class="text-sm font-medium text-neutral-900">' + escapeHtml(f.value || '--') + '</p>'
+            + '</div>';
+    }
+    fieldsHtml += '</div>';
+    fieldsContainer.innerHTML = fieldsHtml;
 
     // ---------- render validation results ----------
-    const validationContainer = document.getElementById('validationResults');
-    const validations = invoice.validationResults || invoice.validations || [];
+    // Run validation via API and display results
+    var validationContainer = document.getElementById('validationResults');
 
-    if (Array.isArray(validations) && validations.length > 0) {
-        validationContainer.innerHTML = `
-            <div class="space-y-2">
-                ${validations.map(v => {
-                    const passed = v.passed || v.valid || v.status === 'pass';
-                    const icon = passed
-                        ? '<svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
-                        : '<svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
-                    const bg = passed ? 'bg-green-50' : 'bg-red-50';
-                    return `
-                        <div class="flex items-start gap-2 p-2 rounded-lg ${bg}">
-                            ${icon}
-                            <div>
-                                <p class="text-sm font-medium text-neutral-800">${escapeHtml(v.field || v.name || v.rule || 'Check')}</p>
-                                ${v.message ? `<p class="text-xs text-neutral-500">${escapeHtml(v.message)}</p>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+    function renderValidationResults(results) {
+        if (!results || !results.length) {
+            validationContainer.innerHTML = '<p class="text-neutral-400 text-sm italic">Click "Validate" to run the 8-field validation check.</p>';
+            return;
+        }
+        var html = '<div class="space-y-2">';
+        for (var j = 0; j < results.length; j++) {
+            var v = results[j];
+            var passed = v.passed;
+            var icon = passed
+                ? '<svg class="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
+                : '<svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+            var bg = passed ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100';
+            html += '<div class="flex items-start gap-3 p-3 rounded-lg border ' + bg + '">'
+                + icon
+                + '<div>'
+                + '<p class="text-sm font-medium text-neutral-800">' + escapeHtml(v.field) + '</p>'
+                + (v.message ? '<p class="text-xs text-neutral-500 mt-0.5">' + escapeHtml(v.message) + '</p>' : '')
+                + '</div></div>';
+        }
+        html += '</div>';
+        validationContainer.innerHTML = html;
+    }
+
+    // Build client-side validation results from the invoice data
+    function buildValidationChecks(inv) {
+        var checks = [];
+        // 1. Vendor Legal Name
+        var hasVendor = inv.vendorLegalName && inv.vendorLegalName.trim() !== '';
+        checks.push({ field: 'Vendor Legal Name', passed: hasVendor, message: hasVendor ? 'Present' : 'Missing — vendor name is required' });
+        // 2. Invoice Number
+        var hasInvNum = inv.invoiceNumber && inv.invoiceNumber.trim() !== '';
+        checks.push({ field: 'Invoice Number', passed: hasInvNum, message: hasInvNum ? inv.invoiceNumber : 'Missing — invoice number is required' });
+        // 3. Invoice Date
+        var hasDate = inv.invoiceDate != null;
+        checks.push({ field: 'Invoice Date', passed: hasDate, message: hasDate ? formatDate(inv.invoiceDate) : 'Missing — invoice date is required' });
+        // 4. Invoice Currency
+        var hasCurrency = inv.invoiceCurrency && inv.invoiceCurrency.trim() !== '';
+        var validCurrencies = ['INR', 'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'SGD', 'AED', 'JPY', 'CHF'];
+        var currencyValid = hasCurrency && validCurrencies.indexOf(inv.invoiceCurrency.toUpperCase()) >= 0;
+        checks.push({ field: 'Invoice Currency', passed: currencyValid, message: currencyValid ? inv.invoiceCurrency : (hasCurrency ? 'Invalid ISO 4217 currency: ' + inv.invoiceCurrency : 'Missing — currency is required') });
+        // 5. Total Amount > 0
+        var amountValid = inv.totalAmount != null && inv.totalAmount > 0;
+        checks.push({ field: 'Total Amount', passed: amountValid, message: amountValid ? formatCurrency(inv.totalAmount, inv.invoiceCurrency) : 'Must be greater than zero' });
+        // 6. Tax Amount >= 0
+        var taxValid = inv.taxAmount != null && inv.taxAmount >= 0;
+        checks.push({ field: 'Tax Amount', passed: taxValid, message: taxValid ? formatCurrency(inv.taxAmount, inv.invoiceCurrency) : 'Cannot be negative' });
+        // 7. PO Number
+        var hasPO = inv.poNumber && inv.poNumber.trim() !== '';
+        checks.push({ field: 'PO Number', passed: hasPO, message: hasPO ? inv.poNumber : 'Missing — purchase order reference required' });
+        // 8. Duplicate Check
+        var isDuplicate = inv.exceptionReason && inv.exceptionReason.toLowerCase().indexOf('duplicate') >= 0;
+        checks.push({ field: 'Duplicate Check', passed: !isDuplicate, message: isDuplicate ? 'Duplicate detected: same vendor + invoice number' : 'No duplicate found' });
+        return checks;
+    }
+
+    // Auto-show validation for non-Received invoices
+    if (invoice.status !== 'Received') {
+        renderValidationResults(buildValidationChecks(invoice));
     } else {
-        validationContainer.innerHTML = '<p class="text-neutral-400 text-sm">No validation results available.</p>';
+        validationContainer.innerHTML = '<p class="text-neutral-400 text-sm italic">Click "Validate" to run the 8-field validation check.</p>';
+    }
+
+    // ---------- render exception info ----------
+    if (invoice.status === 'Exception' && invoice.exceptionReason) {
+        var exDiv = document.createElement('div');
+        exDiv.className = 'mt-4 p-4 bg-red-50 border border-red-200 rounded-lg';
+        exDiv.innerHTML = '<p class="text-sm font-semibold text-red-700 mb-1">Exception Reason</p>'
+            + '<p class="text-sm text-red-600">' + escapeHtml(invoice.exceptionReason) + '</p>'
+            + (invoice.exceptionNotes ? '<p class="text-xs text-red-500 mt-2">Notes: ' + escapeHtml(invoice.exceptionNotes) + '</p>' : '');
+        validationContainer.parentElement.appendChild(exDiv);
     }
 
     // ---------- render linked documents ----------
-    const linkedDocs = invoice.linkedDocuments || invoice.documents || [];
-    const docsContainer = document.getElementById('linkedDocs');
-
-    if (Array.isArray(linkedDocs) && linkedDocs.length > 0) {
-        docsContainer.innerHTML = `
-            <div class="space-y-2">
-                ${linkedDocs.map(doc => `
-                    <div class="flex items-center gap-3 p-3 border border-neutral-100 rounded-lg">
-                        <svg class="w-5 h-5 text-neutral-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                        <div>
-                            <p class="text-sm font-medium text-neutral-800">${escapeHtml(doc.name || doc.fileName || 'Document')}</p>
-                            <p class="text-xs text-neutral-500">${escapeHtml(doc.type || doc.contentType || '')}</p>
-                        </div>
-                        ${doc.url ? `<a href="${escapeHtml(doc.url)}" target="_blank" class="ml-auto text-sm text-primary-500 hover:text-primary-600">Download</a>` : ''}
-                    </div>
-                `).join('')}
-            </div>
-        `;
+    var docsContainer = document.getElementById('linkedDocs');
+    if (invoice.attachmentName) {
+        docsContainer.innerHTML = '<div class="flex items-center gap-3 p-3 border border-neutral-100 rounded-lg">'
+            + '<svg class="w-5 h-5 text-neutral-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>'
+            + '<div>'
+            + '<p class="text-sm font-medium text-neutral-800">' + escapeHtml(invoice.attachmentName) + '</p>'
+            + '<p class="text-xs text-neutral-500">Source: ' + escapeHtml(invoice.emailSender || 'Email attachment') + '</p>'
+            + '</div></div>';
     }
 
     // ---------- action buttons ----------
-    async function invoiceAction(action, method = 'POST') {
-        try {
-            const res = await authService.fetchWithAuth(`/api/invoices/${encodeURIComponent(invoiceId)}/${action}`, { method });
-            if (res.ok) {
-                showToast(`Action "${action}" completed.`, 'success');
-                // Reload the page to reflect changes
-                setTimeout(() => window.location.reload(), 800);
-            } else {
-                const err = await res.json().catch(() => ({}));
-                showToast(err.error || `Action "${action}" failed.`, 'error');
+    // Validate button
+    var btnValidate = document.getElementById('btnReExtract');
+    if (btnValidate) {
+        btnValidate.textContent = 'Validate';
+        btnValidate.onclick = async function() {
+            btnValidate.disabled = true;
+            btnValidate.textContent = 'Validating...';
+            try {
+                var vRes = await authService.fetchWithAuth('/api/invoices/' + encodeURIComponent(invoiceId) + '/validate', { method: 'POST' });
+                if (vRes.ok) {
+                    var result = await vRes.json();
+                    showToast(result.isValid ? 'All 8 checks passed! Status: ReadyForZoho' : 'Validation failed: ' + (result.errors || []).join(', '), result.isValid ? 'success' : 'error');
+                    setTimeout(function() { window.location.reload(); }, 1200);
+                } else {
+                    showToast('Validation failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error during validation.', 'error');
             }
-        } catch (err) {
-            console.error(`Action ${action} error:`, err);
-            showToast(`Network error during "${action}".`, 'error');
-        }
+            btnValidate.disabled = false;
+            btnValidate.textContent = 'Validate';
+        };
     }
 
-    document.getElementById('btnReExtract').addEventListener('click', () => {
-        if (confirm('Re-extract data from this invoice? This will overwrite current extracted fields.')) {
-            invoiceAction('re-extract');
-        }
-    });
+    // Mark Ready button
+    var btnReady = document.getElementById('btnMarkReady');
+    if (btnReady) {
+        btnReady.onclick = async function() {
+            try {
+                var r = await authService.fetchWithAuth('/api/invoices/' + encodeURIComponent(invoiceId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'ReadyForZoho' })
+                });
+                if (r.ok) {
+                    showToast('Invoice marked as Ready for Zoho.', 'success');
+                    setTimeout(function() { window.location.reload(); }, 800);
+                } else { showToast('Failed to update status.', 'error'); }
+            } catch (e) { showToast('Network error.', 'error'); }
+        };
+    }
 
-    document.getElementById('btnMarkReady').addEventListener('click', () => {
-        invoiceAction('mark-ready');
-    });
+    // Flag Exception button
+    var btnException = document.getElementById('btnFlagException');
+    if (btnException) {
+        btnException.onclick = async function() {
+            var reason = prompt('Enter exception reason:');
+            if (reason === null) return;
+            try {
+                var r = await authService.fetchWithAuth('/api/invoices/' + encodeURIComponent(invoiceId), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Exception', exceptionReason: reason })
+                });
+                if (r.ok) {
+                    showToast('Invoice flagged as Exception.', 'success');
+                    setTimeout(function() { window.location.reload(); }, 800);
+                } else { showToast('Failed to flag exception.', 'error'); }
+            } catch (e) { showToast('Network error.', 'error'); }
+        };
+    }
 
-    document.getElementById('btnFlagException').addEventListener('click', () => {
-        const reason = prompt('Enter exception reason (optional):');
-        if (reason !== null) {
-            authService.fetchWithAuth(`/api/invoices/${encodeURIComponent(invoiceId)}/flag-exception`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason })
-            }).then(res => {
-                if (res.ok) {
-                    showToast('Invoice flagged as exception.', 'success');
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    showToast('Failed to flag exception.', 'error');
-                }
-            }).catch(() => showToast('Network error.', 'error'));
-        }
-    });
-
-    document.getElementById('btnEdit').addEventListener('click', () => {
-        showToast('Edit mode coming soon.', 'info');
-    });
+    // Edit button
+    var btnEdit = document.getElementById('btnEdit');
+    if (btnEdit) {
+        btnEdit.onclick = function() { showToast('Edit mode — use AI coding tools to build this!', 'info'); };
+    }
 })();

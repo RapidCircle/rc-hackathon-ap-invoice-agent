@@ -28,12 +28,20 @@
     }
 
     function formatCurrency(amount, currency) {
-        if (amount == null) return '--';
+        if (amount == null || isNaN(amount)) return '--';
+        var cur = currency || 'INR';
         try {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(amount);
-        } catch {
-            return `${currency || ''} ${Number(amount).toFixed(2)}`;
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: cur }).format(amount);
+        } catch (e) {
+            return cur + ' ' + Number(amount).toLocaleString('en-IN');
         }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '--';
+        try {
+            return new Date(dateStr).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch (e) { return dateStr; }
     }
 
     function showToast(message, type = 'info') {
@@ -60,11 +68,11 @@
         }
         tbody.innerHTML = invoices.map(inv => `
             <tr class="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">
-                <td class="px-5 py-3 text-neutral-900 font-medium">${escapeHtml(inv.vendorName || inv.vendor || '--')}</td>
-                <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.invoiceNumber || inv.invoiceNo || '--')}</td>
-                <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.invoiceDate || '--')}</td>
-                <td class="px-5 py-3 text-neutral-900 font-medium">${formatCurrency(inv.totalAmount || inv.amount, inv.currency)}</td>
-                <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.currency || 'USD')}</td>
+                <td class="px-5 py-3 text-neutral-900 font-medium">${escapeHtml(inv.vendorLegalName || '--')}</td>
+                <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.invoiceNumber || '--')}</td>
+                <td class="px-5 py-3 text-neutral-600">${formatDate(inv.invoiceDate)}</td>
+                <td class="px-5 py-3 text-neutral-900 font-medium">${formatCurrency(inv.totalAmount, inv.invoiceCurrency)}</td>
+                <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.invoiceCurrency || 'INR')}</td>
                 <td class="px-5 py-3">${statusPill(inv.status)}</td>
                 <td class="px-5 py-3">
                     <a href="/app/invoice-detail.html?id=${encodeURIComponent(inv.id)}"
@@ -99,8 +107,8 @@
         const q = searchInput.value.toLowerCase().trim();
         if (!q) { renderTable(allInvoices); return; }
         const filtered = allInvoices.filter(inv => {
-            const vendor  = (inv.vendorName || inv.vendor || '').toLowerCase();
-            const invNum  = (inv.invoiceNumber || inv.invoiceNo || '').toLowerCase();
+            const vendor  = (inv.vendorLegalName || '').toLowerCase();
+            const invNum  = (inv.invoiceNumber || '').toLowerCase();
             const status  = (inv.status || '').toLowerCase();
             return vendor.includes(q) || invNum.includes(q) || status.includes(q);
         });
