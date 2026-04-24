@@ -74,6 +74,22 @@
             </div>
         </div>
 
+        <!-- Validation Pipeline Stepper -->
+        <div class="bg-white rounded-xl border border-neutral-200 mb-6">
+            <div class="px-5 py-4 border-b border-neutral-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-neutral-900">Validation Pipeline</h2>
+                    <span id="stepperSummary" class="text-xs font-medium text-neutral-500"></span>
+                </div>
+            </div>
+            <div id="validationStepper" class="p-5">
+                <div class="flex items-center justify-between overflow-x-auto pb-2">
+                    <!-- 8 steps rendered by JS -->
+                </div>
+                <p class="text-neutral-400 text-sm text-center mt-2 italic" id="stepperPlaceholder">Click "Validate" to run the 8-step pipeline</p>
+            </div>
+        </div>
+
         <!-- Two-column layout -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- Extracted Fields -->
@@ -88,10 +104,10 @@
                 </div>
             </div>
 
-            <!-- Validation Results -->
+            <!-- Validation Results (detail list) -->
             <div class="bg-white rounded-xl border border-neutral-200">
                 <div class="px-5 py-4 border-b border-neutral-200">
-                    <h2 class="text-lg font-semibold text-neutral-900">Validation Results</h2>
+                    <h2 class="text-lg font-semibold text-neutral-900">Validation Details</h2>
                 </div>
                 <div id="validationResults" class="p-5">
                     <p class="text-neutral-400 text-sm">Loading...</p>
@@ -99,13 +115,45 @@
             </div>
         </div>
 
-        <!-- Linked Documents -->
+        <!-- File Upload & Document Preview -->
         <div class="bg-white rounded-xl border border-neutral-200 mb-6">
             <div class="px-5 py-4 border-b border-neutral-200">
-                <h2 class="text-lg font-semibold text-neutral-900">Linked Documents</h2>
+                <h2 class="text-lg font-semibold text-neutral-900">Invoice Document</h2>
             </div>
-            <div id="linkedDocs" class="p-5">
-                <p class="text-neutral-400 text-sm">No linked documents found.</p>
+            <div class="p-5">
+                <!-- Existing document preview -->
+                <div id="linkedDocs" class="mb-4">
+                    <p class="text-neutral-400 text-sm">No linked documents found.</p>
+                </div>
+                <!-- Upload area -->
+                <div id="uploadArea" class="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary-400 hover:bg-primary-50/30 transition-colors cursor-pointer">
+                    <svg class="w-10 h-10 text-neutral-400 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                    </svg>
+                    <p class="text-sm font-medium text-neutral-700">Drag & drop invoice PDF or image here</p>
+                    <p class="text-xs text-neutral-500 mt-1">or click to browse — PDF, PNG, JPG up to 10MB</p>
+                    <input id="fileInput" type="file" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                </div>
+                <!-- Upload progress -->
+                <div id="uploadProgress" class="hidden mt-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 bg-neutral-200 rounded-full h-2">
+                            <div id="uploadBar" class="bg-primary-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <span id="uploadPercent" class="text-xs font-medium text-neutral-600">0%</span>
+                    </div>
+                    <p id="uploadFileName" class="text-xs text-neutral-500 mt-1"></p>
+                </div>
+                <!-- Document preview (shows after upload or for existing) -->
+                <div id="docPreview" class="hidden mt-4 border border-neutral-200 rounded-lg overflow-hidden">
+                    <div class="bg-neutral-50 px-4 py-2 border-b border-neutral-200 flex items-center justify-between">
+                        <span id="previewFileName" class="text-sm font-medium text-neutral-700"></span>
+                        <button id="btnRemoveDoc" class="text-xs text-red-500 hover:text-red-700 font-medium">Remove</button>
+                    </div>
+                    <div id="previewContent" class="p-4 flex items-center justify-center bg-white min-h-[200px]">
+                        <!-- PDF embed or image tag rendered by JS -->
+                    </div>
+                </div>
             </div>
         </div>
 

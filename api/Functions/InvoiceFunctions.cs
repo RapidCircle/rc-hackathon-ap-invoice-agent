@@ -80,11 +80,12 @@ public class InvoiceFunctions
     }
 
     /// <summary>
-    /// GET /api/invoices/stats — Get dashboard statistics.
+    /// GET /api/invoice-stats — Get dashboard statistics.
+    /// Route uses "invoice-stats" instead of "invoices/stats" to avoid conflict with "invoices/{id}".
     /// </summary>
     [Function("InvoiceStats")]
     public async Task<HttpResponseData> GetStats(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "invoices/stats")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "invoice-stats")] HttpRequestData req)
     {
         try
         {

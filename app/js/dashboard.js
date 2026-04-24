@@ -63,7 +63,7 @@
     // ---------- fetch stats ----------
     // Backend returns: receivedCount, readyForZohoCount, exceptionCount, inReviewCount, correctedCount, totalCount, totalAmount
     try {
-        var statsRes = await authService.fetchWithAuth('/api/invoices/stats');
+        var statsRes = await authService.fetchWithAuth('/api/invoice-stats');
         if (statsRes.ok) {
             var stats = await statsRes.json();
             var elReceived = document.getElementById('statReceived');
