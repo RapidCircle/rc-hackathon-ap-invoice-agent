@@ -2,6 +2,15 @@
 
 An intelligent Accounts Payable invoice processing agent that automates invoice ingestion, validation, exception handling, and batch posting to Zoho Books. Built for the Rapid Circle internal hackathon.
 
+## Live App
+
+| Item | Link |
+|------|------|
+| **Live URL** | https://gentle-grass-03ab54203.7.azurestaticapps.net |
+| **MVP1 Actions** | [MVP1-ACTIONS.md](MVP1-ACTIONS.md) — Full checklist of what to build |
+| **Specification** | [docs/SPECIFICATION.md](docs/SPECIFICATION.md) — Features F1-F6 |
+| **KT Guide** | [KT-GUIDE.md](KT-GUIDE.md) — Code recipes, AI tools, Git commands |
+
 ## Tech Stack
 
 | Layer | Technology |
