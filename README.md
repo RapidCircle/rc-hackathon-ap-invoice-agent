@@ -23,45 +23,46 @@ An intelligent Accounts Payable invoice processing agent that automates invoice 
 - **Dashboard Stats** — Real-time counts by status, total amounts, and processing metrics
 - **Demo Data** — One-click seed with 10 Indian IT vendors and 20 realistic invoices
 
-## Setup Instructions
+## Getting Started
 
-### Prerequisites
+### Option A: GitHub Codespaces (Recommended — Zero Install)
 
-- .NET 8 SDK
-- Node.js 18+
-- Azure Static Web Apps CLI (`npm install -g @azure/static-web-apps-cli`)
-- Azurite (Azure Storage Emulator): `npm install -g azurite`
+1. Click **Code** → **Codespaces** → **Create codespace on main**
+2. Wait ~2 minutes for the container to build (everything auto-installs)
+3. In the terminal run: `bash scripts/swa-start.sh`
+4. Click the **"Open in Browser"** notification for port **4280**
+5. Click **Seed Test Data** on the homepage
+6. Login with any demo persona, MFA code: **123456**
 
-### Quick Start
+**No local installs needed. Works in any browser.**
+
+### Option B: Local Development
+
+**Prerequisites:**
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js 22.x](https://nodejs.org/)
+- `npm install -g azure-functions-core-tools@4 @azure/static-web-apps-cli azurite`
 
 ```bash
-# 1. Clone the repository
-git clone <repo-url>
+# 1. Clone
+git clone https://github.com/RapidCircle/rc-hackathon-ap-invoice-agent.git
 cd rc-hackathon-ap-invoice-agent
 
-# 2. Initialize local settings
-cp api/local.settings.template.json api/local.settings.json
+# 2. Setup local config
+bash tools/init-local-settings.sh
 
-# 3. Start Azurite (in a separate terminal)
-azurite --silent --location .azurite --debug .azurite/debug.log
+# 3. Start
+bash scripts/swa-start.sh
 
-# 4. Start the app with SWA CLI
-swa start
+# 4. Open http://127.0.0.1:4280
+# Click "Seed Test Data" → Login → MFA code: 123456
 ```
 
 ### Seed Demo Data
 
-After starting the app, seed sample data:
-
-```bash
-curl -X POST http://localhost:7071/api/demo/seed
-```
-
-To reset and re-seed:
-
-```bash
-curl -X POST http://localhost:7071/api/demo/reset
-```
+On the landing page, click **Seed Test Data**. This creates:
+- **10 vendors** — TCS, Infosys, Wipro, Tech Mahindra, HCL, Mindtree, Mphasis, L&T Infotech, Persistent, Zensar
+- **20 invoices** — 5 Received, 5 ReadyForZoho, 5 Exception, 3 InReview, 2 Corrected
 
 ## Architecture
 

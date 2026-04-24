@@ -42,8 +42,8 @@ always cause breakage, crashes, or wasted time.
 
 -   **Frontend**: Vanilla JS, HTML, CSS — ❌ no React / Vue / etc.
 -   **Backend**: .NET 8 Azure Functions (isolated worker)
--   **Storage**: Azure Table Storage + Blob Storage (no SQL)
--   **Caching**: Azure Managed Redis
+-   **Storage**: Azure Table Storage (no SQL)
+-   **AI**: Azure AI Document Intelligence (invoice extraction, mock in dev)
 -   **Hosting**: Azure Static Web Apps
 -   **Frontend Layout**: `/` = public pages, `/app/` = authenticated UI (protected routes)
 
