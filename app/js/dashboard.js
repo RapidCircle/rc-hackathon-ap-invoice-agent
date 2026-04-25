@@ -81,17 +81,21 @@
 
     // ---------- fetch recent invoices ----------
     // Backend returns array of: { id, vendorLegalName, invoiceNumber, invoiceDate, invoiceCurrency, totalAmount, status, exceptionReason, poNumber, createdAt }
+    var allInvoices = [];
+    var statusChart = null;
+    var vendorChart = null;
+
     try {
         var invRes = await authService.fetchWithAuth('/api/invoices');
         if (invRes.ok) {
             var data = await invRes.json();
-            var invoices = Array.isArray(data) ? data : [];
+            allInvoices = Array.isArray(data) ? data : [];
 
-            // Sort by createdAt desc, take top 10
-            invoices.sort(function(a, b) {
+            // Sort by createdAt desc, take top 10 for recent table
+            var invoicesSorted = allInvoices.slice().sort(function(a, b) {
                 return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             });
-            var recent = invoices.slice(0, 10);
+            var recent = invoicesSorted.slice(0, 10);
 
             var tbody = document.getElementById('recentInvoicesBody');
             if (!tbody) return;
@@ -117,6 +121,11 @@
                     + '</td></tr>';
             }
             tbody.innerHTML = html;
+
+            // Initialize charts after invoices are loaded with a delay to ensure DOM is ready
+            setTimeout(function() {
+                initCharts();
+            }, 300);
         }
     } catch (err) {
         console.error('Failed to load invoices:', err);
@@ -124,5 +133,324 @@
         if (errTbody) {
             errTbody.innerHTML = '<tr><td colspan="7" class="px-5 py-8 text-center text-red-500">Failed to load invoices.</td></tr>';
         }
+    }
+
+    // ---------- charts initialization ----------
+    function initCharts() {
+        console.log('Initializing charts...');
+
+        // Wait for Chart.js to be available
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded yet, retrying...');
+            setTimeout(initCharts, 500);
+            return;
+        }
+
+        if (!allInvoices || allInvoices.length === 0) {
+            console.warn('No invoices available for charts');
+            return;
+        }
+
+        // Calculate status distribution
+        var statusCounts = {
+            'Received': 0,
+            'ReadyForZoho': 0,
+            'Exception': 0,
+            'InReview': 0,
+            'Corrected': 0
+        };
+
+        allInvoices.forEach(function(inv) {
+            var status = inv.status || 'Received';
+            if (statusCounts[status] !== undefined) {
+                statusCounts[status]++;
+            }
+        });
+
+        console.log('Status distribution:', statusCounts);
+
+        // ============ DONUT CHART ============
+        try {
+            var statusCanvas = document.getElementById('statusChart');
+            
+            if (!statusCanvas) {
+                console.error('Canvas element with id="statusChart" not found!');
+                console.log('Available canvas elements:', document.querySelectorAll('canvas'));
+                return;
+            }
+
+            // Destroy existing chart
+            if (statusChart) {
+                statusChart.destroy();
+                statusChart = null;
+            }
+
+            // Ensure canvas is visible and has proper size
+            statusCanvas.style.display = 'block';
+            statusCanvas.width = statusCanvas.offsetWidth;
+            statusCanvas.height = statusCanvas.offsetHeight;
+
+            var ctx = statusCanvas.getContext('2d');
+
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Received', 'Ready for Zoho', 'Exception', 'In Review', 'Corrected'],
+                    datasets: [{
+                        label: 'Invoice Count',
+                        data: [
+                            statusCounts['Received'],
+                            statusCounts['ReadyForZoho'],
+                            statusCounts['Exception'],
+                            statusCounts['InReview'],
+                            statusCounts['Corrected']
+                        ],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',      // Blue - Received
+                            'rgba(16, 185, 129, 0.8)',      // Green - Ready
+                            'rgba(239, 68, 68, 0.8)',       // Red - Exception
+                            'rgba(245, 158, 11, 0.8)',      // Orange - In Review
+                            'rgba(168, 85, 247, 0.8)'       // Purple - Corrected
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(168, 85, 247)'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                color: '#404040',
+                                generateLabels: function(chart) {
+                                    var data = chart.data;
+                                    return data.labels.map(function(label, i) {
+                                        var dataset = data.datasets[0];
+                                        var value = dataset.data[i];
+                                        return {
+                                            text: label + ' (' + value + ')',
+                                            fillStyle: dataset.backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' invoices';
+                                }
+                            }
+                        }
+                    },
+                    onClick: function(event, activeElements) {
+                        if (activeElements.length > 0) {
+                            var index = activeElements[0].index;
+                            var statuses = ['Received', 'ReadyForZoho', 'Exception', 'InReview', 'Corrected'];
+                            if (statuses[index]) {
+                                showVendorStatusDetails(statuses[index]);
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('✓ Donut chart created successfully');
+        } catch (e) {
+            console.error('✗ Error creating donut chart:', e);
+        }
+
+        // ============ VENDOR BAR CHART ============
+        try {
+            // Calculate vendor invoice counts
+            var vendorCounts = {};
+            var vendorAmounts = {};
+
+            allInvoices.forEach(function(inv) {
+                var vendor = inv.vendorLegalName || 'Unknown';
+                vendorCounts[vendor] = (vendorCounts[vendor] || 0) + 1;
+                vendorAmounts[vendor] = (vendorAmounts[vendor] || 0) + (inv.totalAmount || 0);
+            });
+
+            var sortedVendors = Object.keys(vendorCounts).sort(function(a, b) {
+                return vendorCounts[b] - vendorCounts[a];
+            });
+
+            var vendorCountsArray = sortedVendors.map(function(v) { return vendorCounts[v]; });
+
+            console.log('Vendor distribution:', sortedVendors, vendorCountsArray);
+
+            var vendorCanvas = document.getElementById('vendorChart');
+            
+            if (!vendorCanvas) {
+                console.error('Canvas element with id="vendorChart" not found!');
+                return;
+            }
+
+            // Destroy existing chart
+            if (vendorChart) {
+                vendorChart.destroy();
+                vendorChart = null;
+            }
+
+            // Ensure canvas is visible and has proper size
+            vendorCanvas.style.display = 'block';
+            vendorCanvas.width = vendorCanvas.offsetWidth;
+            vendorCanvas.height = vendorCanvas.offsetHeight;
+
+            var vendorCtx = vendorCanvas.getContext('2d');
+
+            vendorChart = new Chart(vendorCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedVendors,
+                    datasets: [{
+                        label: 'Invoice Count',
+                        data: vendorCountsArray,
+                        backgroundColor: 'rgba(0, 87, 184, 0.8)',
+                        borderColor: 'rgb(0, 87, 184)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        hoverBackgroundColor: 'rgba(0, 74, 158, 0.9)'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                },
+                                color: '#404040'
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('✓ Vendor bar chart created successfully');
+        } catch (e) {
+            console.error('✗ Error creating vendor chart:', e);
+        }
+    }
+
+    // ---------- show vendor details for selected status ----------
+    function showVendorStatusDetails(status) {
+        var statusLabels = {
+            'Received': 'Received',
+            'ReadyForZoho': 'Ready for Zoho',
+            'Exception': 'Exception',
+            'InReview': 'In Review',
+            'Corrected': 'Corrected'
+        };
+
+        var filteredInvoices = allInvoices.filter(function(inv) {
+            return (inv.status || 'Received') === status;
+        });
+
+        // Group by vendor
+        var vendorData = {};
+        filteredInvoices.forEach(function(inv) {
+            var vendor = inv.vendorLegalName || 'Unknown';
+            if (!vendorData[vendor]) {
+                vendorData[vendor] = { count: 0, amount: 0 };
+            }
+            vendorData[vendor].count++;
+            vendorData[vendor].amount += inv.totalAmount || 0;
+        });
+
+        // Sort by count (descending)
+        var sortedVendorsInStatus = Object.keys(vendorData).sort(function(a, b) {
+            return vendorData[b].count - vendorData[a].count;
+        });
+
+        var tbody = document.getElementById('vendorStatusBody');
+        var title = document.getElementById('vendorStatusTitle');
+        var container = document.getElementById('vendorStatusContainer');
+
+        title.textContent = statusLabels[status] + ' - Vendor Details';
+
+        var html = '';
+        for (var i = 0; i < sortedVendorsInStatus.length; i++) {
+            var vendor = sortedVendorsInStatus[i];
+            var data = vendorData[vendor];
+            html += '<tr class="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">'
+                + '<td class="px-5 py-3 text-neutral-900 font-medium">' + escapeHtml(vendor) + '</td>'
+                + '<td class="px-5 py-3 text-neutral-600">' + data.count + '</td>'
+                + '<td class="px-5 py-3 text-neutral-900 font-medium">' + formatCurrency(data.amount, 'INR') + '</td>'
+                + '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        container.classList.remove('hidden');
+        
+        // Scroll to the details section
+        setTimeout(function() {
+            container.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
     }
 })();
