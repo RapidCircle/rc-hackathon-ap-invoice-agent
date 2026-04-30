@@ -57,10 +57,16 @@
         <!-- Page Header -->
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-neutral-900">All Invoices</h1>
-            <button id="btnUploadOpen"
-                    class="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
-                + Create Invoice
-            </button>
+            <div class="flex items-center gap-3">
+                <button id="btnUploadOpen"
+                        class="bg-neutral-700 hover:bg-neutral-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+                    + Create invoice
+                </button>
+                <button id="btnUploadInvoiceOpen"
+                        class="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+                    Upload invoice
+                </button>
+            </div>
         </div>
 
         <!-- Search and Filter -->
@@ -293,8 +299,139 @@
         </div>
     </div>
 
+    <!-- Upload Invoice Modal -->
+    <div id="uploadInvoiceModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-black/40" id="uploadInvoiceBackdrop"></div>
+        <div class="relative flex items-start justify-center min-h-screen p-4 pt-12">
+            <div class="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-md p-6 relative mb-12">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-1">Upload Invoice</h2>
+                <p class="text-xs text-neutral-500 mb-5">Select a vendor and upload an invoice file (PDF or image)</p>
+
+                <div class="space-y-4">
+                    <!-- Vendor Dropdown -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Vendor <span class="text-red-500">*</span></label>
+                        <select id="uploadInvoiceVendor"
+                                class="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                            <option value="">-- Select vendor --</option>
+                        </select>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">Invoice File <span class="text-red-500">*</span></label>
+                        <div class="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center hover:border-primary-400 transition-colors cursor-pointer" id="uploadInvoiceDropZone">
+                            <input id="uploadInvoiceFile" type="file" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                <p id="uploadInvoiceFileName" class="text-sm text-neutral-500">Click to select or drag file</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-neutral-100">
+                    <button id="btnUploadInvoiceCancel"
+                            class="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button id="btnUploadInvoiceSubmit"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Extraction Results Modal -->
+    <div id="extractionResultsModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="absolute inset-0 bg-black/40" id="extractionBackdrop"></div>
+        <div class="relative flex items-start justify-center min-h-screen p-4 pt-12">
+            <div class="bg-white rounded-2xl shadow-xl border border-neutral-200 w-full max-w-2xl p-6 relative mb-12">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-1">Extraction Results</h2>
+                <p class="text-xs text-neutral-500 mb-5">AI extracted the following data from your invoice</p>
+
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <!-- Vendor -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">Vendor</p>
+                            <p id="resVendor" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confVendor" class="text-xs font-semibold px-2 py-1 bg-green-50 text-green-700 rounded">98%</span>
+                    </div>
+
+                    <!-- Invoice Number -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">Invoice Number</p>
+                            <p id="resInvoiceNum" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confInvoiceNum" class="text-xs font-semibold px-2 py-1 bg-green-50 text-green-700 rounded">98%</span>
+                    </div>
+
+                    <!-- Invoice Date -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">Invoice Date</p>
+                            <p id="resInvoiceDate" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confInvoiceDate" class="text-xs font-semibold px-2 py-1 bg-green-50 text-green-700 rounded">91%</span>
+                    </div>
+
+                    <!-- Currency -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">Currency</p>
+                            <p id="resCurrency" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confCurrency" class="text-xs font-semibold px-2 py-1 bg-green-50 text-green-700 rounded">99%</span>
+                    </div>
+
+                    <!-- Total Amount -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">Total Amount</p>
+                            <p id="resTotalAmount" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confTotalAmount" class="text-xs font-semibold px-2 py-1 bg-green-50 text-green-700 rounded">94%</span>
+                    </div>
+
+                    <!-- PO Number -->
+                    <div class="flex items-start justify-between p-3 bg-neutral-50 rounded-lg">
+                        <div>
+                            <p class="text-xs font-medium text-neutral-500">PO Number</p>
+                            <p id="resPoNumber" class="text-sm font-semibold text-neutral-900">--</p>
+                        </div>
+                        <span id="confPoNumber" class="text-xs font-semibold px-2 py-1 bg-yellow-50 text-yellow-700 rounded">85%</span>
+                    </div>
+
+                    <!-- Overall Confidence -->
+                    <div class="flex items-center justify-center p-4 bg-primary-50 rounded-lg border border-primary-200">
+                        <div class="text-center">
+                            <p class="text-xs font-medium text-primary-600 mb-1">Overall Confidence Score</p>
+                            <p id="overallConfidence" class="text-3xl font-bold text-primary-700">92%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-neutral-100">
+                    <button id="btnExtractCancel"
+                            class="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors">
+                        Close
+                    </button>
+                    <button id="btnExtractViewDetails"
+                            class="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors">
+                        View Full Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="/js/authService.js"></script>
     <script src="/app/app.js"></script>
