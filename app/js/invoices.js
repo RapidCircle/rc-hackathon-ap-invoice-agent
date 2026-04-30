@@ -67,7 +67,7 @@
             return;
         }
         tbody.innerHTML = invoices.map(inv => `
-            <tr class="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">
+            <tr class="border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer" onclick="window.location.href='/app/invoice-detail.html?id=${encodeURIComponent(inv.id)}'">
                 <td class="px-5 py-3 text-neutral-900 font-medium">${escapeHtml(inv.vendorLegalName || '--')}</td>
                 <td class="px-5 py-3 text-neutral-600">${escapeHtml(inv.invoiceNumber || '--')}</td>
                 <td class="px-5 py-3 text-neutral-600">${formatDate(inv.invoiceDate)}</td>
@@ -76,7 +76,8 @@
                 <td class="px-5 py-3">${statusPill(inv.status)}</td>
                 <td class="px-5 py-3">
                     <a href="/app/invoice-detail.html?id=${encodeURIComponent(inv.id)}"
-                       class="text-primary-500 hover:text-primary-600 font-medium text-sm transition-colors">View</a>
+                       class="text-primary-500 hover:text-primary-600 font-medium text-sm transition-colors"
+                       onclick="event.stopPropagation();">View</a>
                 </td>
             </tr>
         `).join('');
@@ -103,17 +104,134 @@
 
     // ---------- search / filter ----------
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', () => {
-        const q = searchInput.value.toLowerCase().trim();
-        if (!q) { renderTable(allInvoices); return; }
-        const filtered = allInvoices.filter(inv => {
-            const vendor  = (inv.vendorLegalName || '').toLowerCase();
-            const invNum  = (inv.invoiceNumber || '').toLowerCase();
-            const status  = (inv.status || '').toLowerCase();
-            return vendor.includes(q) || invNum.includes(q) || status.includes(q);
-        });
-        renderTable(filtered);
+    const filterPanel = document.getElementById('filterPanel');
+    const btnFilterOpen = document.getElementById('btnFilterOpen');
+    const btnFilterReset = document.getElementById('btnFilterReset');
+    
+    // Filter inputs
+    const filterVendor = document.getElementById('filterVendor');
+    const filterGst = document.getElementById('filterGst');
+    const filterPriceMin = document.getElementById('filterPriceMin');
+    const filterPriceMax = document.getElementById('filterPriceMax');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterCurrency = document.getElementById('filterCurrency');
+
+    // Track if any filter is active
+    let hasActiveFilters = false;
+
+    // Toggle filter panel
+    btnFilterOpen.addEventListener('click', () => {
+        filterPanel.classList.toggle('hidden');
     });
+
+    // Apply filters function
+    function applyFilters() {
+        const searchQuery = searchInput.value.toLowerCase().trim();
+        const vendorFilter = filterVendor.value.toLowerCase().trim();
+        const gstFilter = filterGst.value.toLowerCase().trim();
+        const priceMin = filterPriceMin.value ? parseFloat(filterPriceMin.value) : null;
+        const priceMax = filterPriceMax.value ? parseFloat(filterPriceMax.value) : null;
+        const dateFrom = filterDateFrom.value ? new Date(filterDateFrom.value) : null;
+        const dateTo = filterDateTo.value ? new Date(filterDateTo.value) : null;
+        const statusFilter = filterStatus.value.toLowerCase().trim();
+        const currencyFilter = filterCurrency.value.toLowerCase().trim();
+
+        // Check if any filter is active
+        hasActiveFilters = vendorFilter || gstFilter || priceMin !== null || priceMax !== null || 
+                          dateFrom || dateTo || statusFilter || currencyFilter;
+
+        const filtered = allInvoices.filter(inv => {
+            // Search query (vendor, invoice number, status)
+            if (searchQuery) {
+                const vendor = (inv.vendorLegalName || '').toLowerCase();
+                const invNum = (inv.invoiceNumber || '').toLowerCase();
+                const status = (inv.status || '').toLowerCase();
+                const match = vendor.includes(searchQuery) || invNum.includes(searchQuery) || status.includes(searchQuery);
+                if (!match) return false;
+            }
+
+            // Vendor filter
+            if (vendorFilter) {
+                const vendor = (inv.vendorLegalName || '').toLowerCase();
+                if (!vendor.includes(vendorFilter)) return false;
+            }
+
+            // GST filter
+            if (gstFilter) {
+                const gst = (inv.gstNumber || '').toLowerCase();
+                if (!gst.includes(gstFilter)) return false;
+            }
+
+            // Price range filter
+            if (priceMin !== null && inv.totalAmount < priceMin) return false;
+            if (priceMax !== null && inv.totalAmount > priceMax) return false;
+
+            // Date range filter
+            if (dateFrom || dateTo) {
+                const invDate = new Date(inv.invoiceDate);
+                if (dateFrom && invDate < dateFrom) return false;
+                if (dateTo) {
+                    // Add 1 day to include the entire last day
+                    const nextDay = new Date(dateTo);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    if (invDate >= nextDay) return false;
+                }
+            }
+
+            // Status filter
+            if (statusFilter) {
+                const status = (inv.status || '').toLowerCase();
+                if (status !== statusFilter) return false;
+            }
+
+            // Currency filter
+            if (currencyFilter) {
+                const currency = (inv.invoiceCurrency || 'INR').toLowerCase();
+                if (currency !== currencyFilter) return false;
+            }
+
+            return true;
+        });
+
+        renderTable(filtered);
+        
+        // Show/hide reset button
+        if (hasActiveFilters || searchQuery) {
+            btnFilterReset.style.display = 'flex';
+        } else {
+            btnFilterReset.style.display = 'none';
+        }
+    }
+
+    // Reset all filters
+    btnFilterReset.addEventListener('click', () => {
+        searchInput.value = '';
+        filterVendor.value = '';
+        filterGst.value = '';
+        filterPriceMin.value = '';
+        filterPriceMax.value = '';
+        filterDateFrom.value = '';
+        filterDateTo.value = '';
+        filterStatus.value = '';
+        filterCurrency.value = '';
+        hasActiveFilters = false;
+        btnFilterReset.style.display = 'none';
+        filterPanel.classList.add('hidden');
+        renderTable(allInvoices);
+    });
+
+    // Add event listeners to all filter inputs
+    searchInput.addEventListener('input', applyFilters);
+    filterVendor.addEventListener('input', applyFilters);
+    filterGst.addEventListener('input', applyFilters);
+    filterPriceMin.addEventListener('input', applyFilters);
+    filterPriceMax.addEventListener('input', applyFilters);
+    filterDateFrom.addEventListener('change', applyFilters);
+    filterDateTo.addEventListener('change', applyFilters);
+    filterStatus.addEventListener('change', applyFilters);
+    filterCurrency.addEventListener('change', applyFilters);
 
     // ---------- create invoice modal ----------
     var uploadModal     = document.getElementById('uploadModal');

@@ -26,7 +26,13 @@
     <style type="text/tailwindcss">
         body { font-family: 'Inter', sans-serif; }
         h1, h2, h3, h4, h5, h6 { font-family: 'DM Sans', sans-serif; }
+        
+        canvas {
+            max-height: none !important;
+            max-width: none !important;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-neutral-50 min-h-screen">
 
@@ -101,7 +107,45 @@
             </div>
         </div>
 
-        <!-- Recent Invoices -->
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Invoice Status Distribution (Donut Chart) -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5" style="min-height: 450px;">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-4">Invoice Status Distribution</h2>
+                <div style="position: relative; width: 100%; height: 350px; min-width: 100%;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Vendor Invoice Count (Bar Chart) -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-5" style="min-height: 450px;">
+                <h2 class="text-lg font-semibold text-neutral-900 mb-4">Invoice Count by Vendor</h2>
+                <div style="position: relative; width: 100%; height: 350px; min-width: 100%;">
+                    <canvas id="vendorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendor Status Details (Dynamic - appears when status color is clicked) -->
+        <div id="vendorStatusContainer" class="bg-white rounded-xl border border-neutral-200 p-5 mb-8 hidden">
+            <h2 class="text-lg font-semibold text-neutral-900 mb-4">
+                <span id="vendorStatusTitle">Vendor Details</span>
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-neutral-100 text-left">
+                            <th class="px-5 py-3 font-medium text-neutral-500">Vendor</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Invoice Count</th>
+                            <th class="px-5 py-3 font-medium text-neutral-500">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorStatusBody">
+                        <tr><td colspan="3" class="px-5 py-8 text-center text-neutral-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="bg-white rounded-xl border border-neutral-200">
             <div class="px-5 py-4 border-b border-neutral-200">
                 <h2 class="text-lg font-semibold text-neutral-900">Recent Invoices</h2>
